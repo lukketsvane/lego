@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useState, useCallback } from 'react'
+import React, { useRef, useState, useCallback, useEffect } from 'react'
 import * as THREE from 'three'
 import { useThree, useFrame } from '@react-three/fiber'
 import { LegoBrick } from './lego-brick'
@@ -14,6 +14,7 @@ interface BrickPlacerProps {
   rotation: number
   isSelectMode: boolean
   getRandomColor: () => string
+  initialBricks: Array<{ size: { width: number; length: number }; position: [number, number, number]; rotation: number; color: string }>
 }
 
 export function BrickPlacer({ 
@@ -23,7 +24,8 @@ export function BrickPlacer({
   currentColor, 
   rotation, 
   isSelectMode,
-  getRandomColor
+  getRandomColor,
+  initialBricks
 }: BrickPlacerProps) {
   const [bricks, setBricks] = useState<Array<{ id: number; size: { width: number; length: number }; color: string; position: [number, number, number]; rotation: number }>>([])
   const [previewBrick, setPreviewBrick] = useState<{ size: { width: number; length: number }; position: [number, number, number]; rotation: number } | null>(null)
@@ -36,6 +38,14 @@ export function BrickPlacer({
   const BRICK_HEIGHT = 0.96
   const PLATE_HEIGHT = 0.32
   const EPSILON = 0.0001
+
+  useEffect(() => {
+    const newBricks = initialBricks.map((brick, index) => ({
+      id: Date.now() + index,
+      ...brick
+    }))
+    setBricks(newBricks)
+  }, [initialBricks])
 
   const isPositionOccupied = useCallback((position: [number, number, number], size: { width: number; length: number }, rotation: number, excludeId?: number) => {
     const rotatedSize = rotation % 180 === 0 ? size : { width: size.length, length: size.width }

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, AccumulativeShadows, RandomizedLight, SoftShadows } from '@react-three/drei'
 import { BrickPlacer } from './brick-placer'
@@ -34,6 +34,7 @@ export default function AdvancedLegoBuilder() {
   const [currentColor, setCurrentColor] = useState(classicLegoColors[0].hex)
   const [rotation, setRotation] = useState(0)
   const [isSelectMode, setIsSelectMode] = useState(false)
+  const [initialBricks, setInitialBricks] = useState<Array<{ size: { width: number; length: number }; position: [number, number, number]; rotation: number; color: string }>>([])
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls>>(null)
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
@@ -51,7 +52,7 @@ export default function AdvancedLegoBuilder() {
     }
   }, [])
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.addEventListener('keydown', handleKeyPress)
     return () => {
       window.removeEventListener('keydown', handleKeyPress)
@@ -70,6 +71,31 @@ export default function AdvancedLegoBuilder() {
   const getRandomColor = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * classicLegoColors.length)
     return classicLegoColors[randomIndex].hex
+  }, [])
+
+  const getRandomBrickType = useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * brickSizes.length)
+    return brickSizes[randomIndex]
+  }, [])
+
+  const getRandomPosition = useCallback((): [number, number, number] => {
+    const x = Math.floor(Math.random() * 10) - 5
+    const z = Math.floor(Math.random() * 10) - 5
+    return [x * 0.8, 0, z * 0.8] // 0.8 is the GRID_SIZE
+  }, [])
+
+  const getRandomRotation = useCallback(() => {
+    return Math.floor(Math.random() * 4) * 90
+  }, [])
+
+  useEffect(() => {
+    const newInitialBricks = Array(3).fill(null).map(() => ({
+      size: getRandomBrickType(),
+      position: getRandomPosition(),
+      rotation: getRandomRotation(),
+      color: getRandomColor(),
+    }))
+    setInitialBricks(newInitialBricks)
   }, [])
 
   return (
@@ -97,6 +123,7 @@ export default function AdvancedLegoBuilder() {
           rotation={rotation}
           isSelectMode={isSelectMode}
           getRandomColor={getRandomColor}
+          initialBricks={initialBricks}
         />
         <LegoFloor />
         <OrbitControls 
