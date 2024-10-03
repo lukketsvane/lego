@@ -24,8 +24,8 @@ const classicLegoColors = [
   { name: 'Yellow', hex: '#FFD700' },
   { name: 'Blue', hex: '#0000FF' },
   { name: 'Green', hex: '#008000' },
-  { name: 'White', hex: '#FFFFFF' },
-  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#CFD2CA' },
+  { name: 'neige', hex: '#00B5F0' },
 ]
 
 export default function AdvancedLegoBuilder() {
