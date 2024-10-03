@@ -29,7 +29,7 @@ const classicLegoColors = [
 ]
 
 export default function AdvancedLegoBuilder() {
-  const [currentBrickType, setCurrentBrickType] = useState(brickSizes[0])
+  const [currentBrickType, setCurrentBrickType] = useState(brickSizes[4]) // 2x2 brick
   const [isRandomColorMode, setIsRandomColorMode] = useState(true)
   const [currentColor, setCurrentColor] = useState(classicLegoColors[0].hex)
   const [rotation, setRotation] = useState(0)

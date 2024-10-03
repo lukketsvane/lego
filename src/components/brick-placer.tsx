@@ -13,9 +13,18 @@ interface BrickPlacerProps {
   currentColor: string
   rotation: number
   isSelectMode: boolean
+  getRandomColor: () => string
 }
 
-export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, currentColor, rotation, isSelectMode }: BrickPlacerProps) {
+export function BrickPlacer({ 
+  brickSizes, 
+  currentBrickType, 
+  isRandomColorMode, 
+  currentColor, 
+  rotation, 
+  isSelectMode,
+  getRandomColor
+}: BrickPlacerProps) {
   const [bricks, setBricks] = useState<Array<{ id: number; size: { width: number; length: number }; color: string; position: [number, number, number]; rotation: number }>>([])
   const [previewBrick, setPreviewBrick] = useState<{ size: { width: number; length: number }; position: [number, number, number]; rotation: number } | null>(null)
   const [selectedBrick, setSelectedBrick] = useState<number | null>(null)
@@ -50,9 +59,7 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
       if (brick.size.width !== 2 || brick.size.length !== 1) return false
 
       const isHorizontal = rotation % 180 === 0
-      const brickIsHorizontal = brick.rotation % 180 === 
-
- 0
+      const brickIsHorizontal = brick.rotation % 180 === 0
 
       if (isHorizontal !== brickIsHorizontal) return false
 
@@ -92,10 +99,6 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
 
     return [snappedX, snappedY, snappedZ]
   }, [bricks])
-
-  const getRandomColor = useCallback(() => {
-    return `#${Math.floor(Math.random()*16777215).toString(16)}`
-  }, [])
 
   const updatePreviewBrick = useCallback((event: MouseEvent) => {
     if (isSelectMode) {
@@ -216,7 +219,7 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
       {previewBrick && !isSelectMode && (
         <LegoBrick 
           size={previewBrick.size} 
-          color="rgba(255, 255, 255, 0.5)"
+          color={isRandomColorMode ? getRandomColor() : currentColor}
           position={previewBrick.position} 
           rotation={previewBrick.rotation}
           isPreview={true}
