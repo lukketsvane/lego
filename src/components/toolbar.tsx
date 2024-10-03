@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Square, Trash2, Shuffle, Palette, RotateCw, Mouse } from 'lucide-react'
+import { Square, Trash2, Shuffle, Palette, RotateCw, MousePointer, Lock, Unlock } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 
@@ -18,6 +18,8 @@ interface ToolbarProps {
   setRotation: (rotation: number) => void
   isSelectMode: boolean
   setIsSelectMode: (mode: boolean) => void
+  isOrbitUnlocked: boolean
+  setIsOrbitUnlocked: (unlocked: boolean) => void
 }
 
 export function Toolbar({ 
@@ -32,7 +34,9 @@ export function Toolbar({
   rotation,
   setRotation,
   isSelectMode,
-  setIsSelectMode
+  setIsSelectMode,
+  isOrbitUnlocked,
+  setIsOrbitUnlocked
 }: ToolbarProps) {
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-80 rounded-full shadow-lg p-2 flex items-center space-x-2 overflow-x-auto max-w-full">
@@ -41,7 +45,7 @@ export function Toolbar({
         onClick={() => setIsSelectMode(true)}
         aria-label="Select mode"
       >
-        <Mouse className="w-6 h-6" />
+        <MousePointer className="w-6 h-6" />
       </button>
       {brickSizes.map((size, index) => (
         <button
@@ -92,6 +96,13 @@ export function Toolbar({
         aria-label="Rotate brick"
       >
         <RotateCw className="w-6 h-6" />
+      </button>
+      <button
+        className={`p-2 rounded-full ${isOrbitUnlocked ? 'bg-blue-500 text-white' : 'hover:bg-gray-200'}`}
+        onClick={() => setIsOrbitUnlocked(!isOrbitUnlocked)}
+        aria-label={isOrbitUnlocked ? "Lock orbit controls" : "Unlock orbit controls"}
+      >
+        {isOrbitUnlocked ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
       </button>
     </div>
   )

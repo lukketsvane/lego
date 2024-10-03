@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment, AccumulativeShadows, RandomizedLight, SoftShadows } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { BrickPlacer } from './brick-placer'
 import { Toolbar } from './toolbar'
 import { LegoFloor } from './lego-floor'
@@ -35,6 +35,7 @@ export default function AdvancedLegoBuilder() {
   const [rotation, setRotation] = useState(0)
   const [isSelectMode, setIsSelectMode] = useState(false)
   const [initialBricks, setInitialBricks] = useState<Array<{ size: { width: number; length: number }; position: [number, number, number]; rotation: number; color: string }>>([])
+  const [isOrbitUnlocked, setIsOrbitUnlocked] = useState(false)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls>>(null)
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
@@ -81,7 +82,7 @@ export default function AdvancedLegoBuilder() {
   const getRandomPosition = useCallback((): [number, number, number] => {
     const x = Math.floor(Math.random() * 10) - 5
     const z = Math.floor(Math.random() * 10) - 5
-    return [x * 0.8, 0, z * 0.8] // 0.8 is the GRID_SIZE
+    return [x * 0.8, 0, z * 0.8] // 0.8 is the UNIT_SIZE
   }, [])
 
   const getRandomRotation = useCallback(() => {
@@ -96,14 +97,12 @@ export default function AdvancedLegoBuilder() {
       color: getRandomColor(),
     }))
     setInitialBricks(newInitialBricks)
-  }, [])
+  }, [getRandomBrickType, getRandomPosition, getRandomRotation, getRandomColor])
 
   return (
-    <div className="w-full h-screen bg-gray-100 relative">
+    <div className="w-full h-screen bg-white relative">
       <Canvas shadows camera={{ position: [20, 20, 20], fov: 50 }}>
-        <SoftShadows size={2.5} samples={16} focus={0.5} />
-        <color attach="background" args={['#f0f0f0']} />
-        <fog attach="fog" args={['#f0f0f0', 30, 100]} />
+        <color attach="background" args={['#ffffff']} />
         <ambientLight intensity={0.5} />
         <directionalLight
           castShadow
@@ -130,7 +129,7 @@ export default function AdvancedLegoBuilder() {
           ref={orbitControlsRef}
           minPolarAngle={Math.PI / 4}
           maxPolarAngle={Math.PI / 3}
-          enableRotate={false}
+          enableRotate={isOrbitUnlocked}
           enablePan={false}
           zoomSpeed={0.5}
           mouseButtons={{
@@ -145,10 +144,6 @@ export default function AdvancedLegoBuilder() {
             }
           }}
         />
-        <AccumulativeShadows temporal frames={100} color="#9d4b4b" colorBlend={0.5} alphaTest={0.9} scale={20}>
-          <RandomizedLight amount={8} radius={4} position={[5, 5, -10]} />
-        </AccumulativeShadows>
-        <Environment preset="city" />
       </Canvas>
       <Toolbar 
         brickSizes={brickSizes}
@@ -163,6 +158,9 @@ export default function AdvancedLegoBuilder() {
         setRotation={setRotation}
         isSelectMode={isSelectMode}
         setIsSelectMode={setIsSelectMode}
+        isOrbitUnlocked={isOrbitUnlocked}
+      
+        setIsOrbitUnlocked={setIsOrbitUnlocked}
       />
     </div>
   )
