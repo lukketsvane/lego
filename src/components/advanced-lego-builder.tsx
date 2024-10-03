@@ -19,24 +19,21 @@ const brickSizes = [
   { width: 2, length: 8, key: '9' },
 ]
 
-const legoColors = [
+const classicLegoColors = [
   { name: 'Red', hex: '#FF0000' },
+  { name: 'Yellow', hex: '#FFD700' },
   { name: 'Blue', hex: '#0000FF' },
-  { name: 'Yellow', hex: '#FFFF00' },
   { name: 'Green', hex: '#008000' },
   { name: 'White', hex: '#FFFFFF' },
   { name: 'Black', hex: '#000000' },
-  { name: 'Orange', hex: '#FFA500' },
-  { name: 'Brown', hex: '#8B4513' },
-  { name: 'Light Gray', hex: '#D3D3D3' },
-  { name: 'Dark Gray', hex: '#A9A9A9' },
 ]
 
 export default function AdvancedLegoBuilder() {
   const [currentBrickType, setCurrentBrickType] = useState(brickSizes[0])
-  const [isRandomColorMode, setIsRandomColorMode] = useState(false)
-  const [currentColor, setCurrentColor] = useState(legoColors[0].hex)
+  const [isRandomColorMode, setIsRandomColorMode] = useState(true)
+  const [currentColor, setCurrentColor] = useState(classicLegoColors[0].hex)
   const [rotation, setRotation] = useState(0)
+  const [isSelectMode, setIsSelectMode] = useState(false)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls>>(null)
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
@@ -45,9 +42,12 @@ export default function AdvancedLegoBuilder() {
       const index = parseInt(key) - 1
       if (index < brickSizes.length) {
         setCurrentBrickType(brickSizes[index])
+        setIsSelectMode(false)
       }
     } else if (key === 'r' || key === 'R') {
       setRotation((prev) => (prev + 90) % 360)
+    } else if (key === 'Backspace' || key === 'Delete') {
+      // Handle delete in BrickPlacer
     }
   }, [])
 
@@ -59,9 +59,18 @@ export default function AdvancedLegoBuilder() {
   }, [handleKeyPress])
 
   const handleSetCurrentBrickType = (type: { width: number; length: number }) => {
-    const newBrickType = brickSizes.find(size => size.width === type.width && size.length === type.length) || brickSizes[0]
-    setCurrentBrickType(newBrickType)
+    if (currentBrickType.width === type.width && currentBrickType.length === type.length) {
+      setIsSelectMode(true)
+    } else {
+      setCurrentBrickType(type)
+      setIsSelectMode(false)
+    }
   }
+
+  const getRandomColor = useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * classicLegoColors.length)
+    return classicLegoColors[randomIndex].hex
+  }, [])
 
   return (
     <div className="w-full h-screen bg-gray-100 relative">
@@ -86,6 +95,8 @@ export default function AdvancedLegoBuilder() {
           isRandomColorMode={isRandomColorMode}
           currentColor={currentColor}
           rotation={rotation}
+          isSelectMode={isSelectMode}
+          getRandomColor={getRandomColor}
         />
         <LegoFloor />
         <OrbitControls 
@@ -120,9 +131,11 @@ export default function AdvancedLegoBuilder() {
         setIsRandomColorMode={setIsRandomColorMode}
         currentColor={currentColor}
         setCurrentColor={setCurrentColor}
-        legoColors={legoColors}
+        legoColors={classicLegoColors}
         rotation={rotation}
         setRotation={setRotation}
+        isSelectMode={isSelectMode}
+        setIsSelectMode={setIsSelectMode}
       />
     </div>
   )

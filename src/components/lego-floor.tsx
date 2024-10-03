@@ -4,7 +4,7 @@ import React, { useMemo } from 'react'
 import * as THREE from 'three'
 
 export function LegoFloor() {
-  const FLOOR_SIZE = 32 // 32x32 studs
+  const FLOOR_SIZE = 24 // 32x32 studs
   const STUD_SPACING = 0.8
   const STUD_RADIUS = 0.24
   const STUD_HEIGHT = 0.04

@@ -12,11 +12,12 @@ interface BrickPlacerProps {
   isRandomColorMode: boolean
   currentColor: string
   rotation: number
+  isSelectMode: boolean
 }
 
-export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, currentColor, rotation }: BrickPlacerProps) {
+export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, currentColor, rotation, isSelectMode }: BrickPlacerProps) {
   const [bricks, setBricks] = useState<Array<{ id: number; size: { width: number; length: number }; color: string; position: [number, number, number]; rotation: number }>>([])
-  const [previewBrick, setPreviewBrick] = useState<{ size: { width: number; length: number }; color: string; position: [number, number, number]; rotation: number } | null>(null)
+  const [previewBrick, setPreviewBrick] = useState<{ size: { width: number; length: number }; position: [number, number, number]; rotation: number } | null>(null)
   const [selectedBrick, setSelectedBrick] = useState<number | null>(null)
   const { camera, scene } = useThree()
   const raycaster = useRef(new THREE.Raycaster())
@@ -25,7 +26,7 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
   const GRID_SIZE = 0.8
   const BRICK_HEIGHT = 0.96
   const PLATE_HEIGHT = 0.32
-  const EPSILON = 0.001
+  const EPSILON = 0.0001
 
   const isPositionOccupied = useCallback((position: [number, number, number], size: { width: number; length: number }, rotation: number, excludeId?: number) => {
     const rotatedSize = rotation % 180 === 0 ? size : { width: size.length, length: size.width }
@@ -49,7 +50,9 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
       if (brick.size.width !== 2 || brick.size.length !== 1) return false
 
       const isHorizontal = rotation % 180 === 0
-      const brickIsHorizontal = brick.rotation % 180 === 0
+      const brickIsHorizontal = brick.rotation % 180 === 
+
+ 0
 
       if (isHorizontal !== brickIsHorizontal) return false
 
@@ -66,8 +69,8 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
     const halfWidth = (rotatedSize.width * GRID_SIZE) / 2
     const halfLength = (rotatedSize.length * GRID_SIZE) / 2
 
-    let snappedX = Math.round(position.x / GRID_SIZE) * GRID_SIZE
-    let snappedZ = Math.round(position.z / GRID_SIZE) * GRID_SIZE
+    let snappedX = Math.round(position.x / (GRID_SIZE / 2)) * (GRID_SIZE / 2)
+    let snappedZ = Math.round(position.z / (GRID_SIZE / 2)) * (GRID_SIZE / 2)
     let snappedY = 0
 
     // Adjust position to align with grid
@@ -95,6 +98,11 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
   }, [])
 
   const updatePreviewBrick = useCallback((event: MouseEvent) => {
+    if (isSelectMode) {
+      setPreviewBrick(null)
+      return
+    }
+
     mouse.current.set(
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
@@ -110,25 +118,26 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
 
       const isOccupied = isPositionOccupied(snappedPosition, size, rotation)
       const isAdjacent2x1 = is2x1Adjacent(snappedPosition, rotation)
-      const color = isRandomColorMode ? getRandomColor() : currentColor
-      setPreviewBrick({
-        size: size,
-        color: isOccupied || isAdjacent2x1 ? '#888888' : color,
-        position: snappedPosition,
-        rotation: rotation
-      })
+      
+      if (!isOccupied && !isAdjacent2x1) {
+        setPreviewBrick({
+          size: size,
+          position: snappedPosition,
+          rotation: rotation
+        })
+      } else {
+        setPreviewBrick(null)
+      }
     } else {
       setPreviewBrick(null)
     }
-  }, [camera, scene, isPositionOccupied, currentBrickType, isRandomColorMode, currentColor, snapToGrid, rotation, is2x1Adjacent, getRandomColor])
+  }, [camera, scene, isPositionOccupied, currentBrickType, snapToGrid, rotation, is2x1Adjacent, isSelectMode])
 
   const placeBrick = useCallback(() => {
-    if (previewBrick && previewBrick.color !== '#888888') {
-      setBricks(prevBricks => [...prevBricks, { 
-        ...previewBrick, 
-        id: Date.now(),
-        color: isRandomColorMode ? getRandomColor() : currentColor
-      }])
+    if (previewBrick) {
+      const color = isRandomColorMode ? getRandomColor() : currentColor
+      setBricks(prevBricks => [...prevBricks, { ...previewBrick, id: Date.now(), color }])
+      setPreviewBrick(null)
     }
   }, [previewBrick, isRandomColorMode, currentColor, getRandomColor])
 
@@ -161,13 +170,36 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
   }, [selectedBrick])
 
   useFrame(() => {
-    document.body.style.cursor = previewBrick && previewBrick.color !== '#888888' ? 'pointer' : 'not-allowed'
+    document.body.style.cursor = isSelectMode ? 'default' : (previewBrick ? 'pointer' : 'default')
   })
+
+  const handleClick = useCallback((event: MouseEvent) => {
+    if (isSelectMode) {
+      selectBrick(event)
+    } else if (selectedBrick === null) {
+      placeBrick()
+    } else {
+      setSelectedBrick(null)
+    }
+  }, [isSelectMode, selectBrick, selectedBrick, placeBrick])
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if ((event.key === 'Backspace' || event.key === 'Delete') && selectedBrick !== null) {
+      deleteBrick()
+    }
+  }, [deleteBrick, selectedBrick])
+
+  React.useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleKeyDown])
 
   return (
     <group 
       onPointerMove={updatePreviewBrick as any} 
-      onClick={selectedBrick === null ? placeBrick : selectBrick as any}
+      onClick={handleClick as any}
       tabIndex={0}
     >
       <LegoFloor />
@@ -181,10 +213,10 @@ export function BrickPlacer({ brickSizes, currentBrickType, isRandomColorMode, c
           isSelected={brick.id === selectedBrick}
         />
       ))}
-      {previewBrick && (
+      {previewBrick && !isSelectMode && (
         <LegoBrick 
           size={previewBrick.size} 
-          color={previewBrick.color} 
+          color="rgba(255, 255, 255, 0.5)"
           position={previewBrick.position} 
           rotation={previewBrick.rotation}
           isPreview={true}
